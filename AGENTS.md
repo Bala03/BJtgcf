@@ -8,7 +8,9 @@ This repo includes a **Cloudflare Workers** Telegram forwarder (grammY + D1 + ad
 
 ### Secrets in the cloud agent environment
 
-When **`BOT_TOKEN`**, **`API_ID`**, and **`API_HASH`** are provided as environment secrets, you can:
+After **Cursor “Add secrets”** (or equivalent) completes, **`BOT_TOKEN`**, **`API_ID`**, and **`API_HASH`** are visible to the agent **shell** (e.g. `curl` using `$BOT_TOKEN`). **Wrangler `dev` / `deploy` still load Worker vars from `cloudflare-telegram-forwarder/.dev.vars` (or dashboard secrets)** — they do not automatically inherit the shell env unless you export into `.dev.vars` yourself.
+
+When those three are available, you can:
 
 1. **Verify the bot (Telegram API)** — no Worker required:
 
