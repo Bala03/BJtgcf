@@ -1,0 +1,17 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "telegram-forward-hub",
+  "main": "src/index.ts",
+  "compatibility_date": "2025-05-14",
+  "observability": { "enabled": true },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "telegram-forward-hub",
+      "database_id": "REPLACE_WITH_WRANGLER_D1_CREATE_OUTPUT"
+    }
+  ],
+  "vars": {
+    "APP_NAME": "Telegram Forward Hub"
+  }
+}

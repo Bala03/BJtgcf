@@ -169,6 +169,10 @@ Please avoid duplicates.
 - For reporting bugs or requesting a new feature please use the [issue tracker](https://github.com/aahnik/tgcf/issues/new)
 of the repo.
 
+## Cloudflare Workers port
+
+An experimental **TypeScript / Cloudflare Workers** implementation (Bot API webhooks, D1 rules, admin UI) lives in [`cloudflare-telegram-forwarder/`](./cloudflare-telegram-forwarder/README.md). It follows similar forwarding/filter ideas with an architecture suited to Workers.
+
 ## Contributing
 
 PRs are most welcome! Read the [contributing guidelines](/.github/CONTRIBUTING.md)

@@ -1,0 +1,9 @@
+# Copy to .dev.vars (never commit .dev.vars)
+BOT_TOKEN=your_bot_token_from_botfather
+ADMIN_PASSWORD=use_a_long_random_password
+SESSION_SECRET=at_least_32_chars_random_string_for_hmac
+PUBLIC_BASE_URL=https://your-worker.workers.dev
+TELEGRAM_WEBHOOK_SECRET=optional_webhook_secret_A-Za-z0-9_-
+# 32-byte key, base64 — openssl rand -base64 32
+ENCRYPTION_KEY=
+BOT_INFO=
