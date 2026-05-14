@@ -1,0 +1,23 @@
+{
+  "name": "telegram-forward-hub",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Production-ready Telegram forwarding on Cloudflare Workers (grammY + D1 + admin UI).",
+  "scripts": {
+    "typecheck": "tsc",
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "cf-typegen": "wrangler types",
+    "db:migrate:local": "wrangler d1 migrations apply DB --local",
+    "db:migrate:remote": "wrangler d1 migrations apply DB --remote"
+  },
+  "dependencies": {
+    "grammy": "^1.38.4",
+    "hono": "^4.7.11"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20250525.0",
+    "typescript": "^5.8.3",
+    "wrangler": "^4.19.0"
+  }
+}
