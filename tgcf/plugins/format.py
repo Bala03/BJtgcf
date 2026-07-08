@@ -2,7 +2,7 @@ import logging
 from enum import Enum
 from typing import Any, Dict
 
-from pydantic import BaseModel  # pylint: disable=no-name-in-module
+from pydantic import BaseModel
 
 from tgcf.plugins import TgcfMessage, TgcfPlugin
 

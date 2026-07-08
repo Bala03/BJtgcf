@@ -1,7 +1,7 @@
 import logging
 from typing import Any, Dict, List
 
-from pydantic import BaseModel  # pylint: disable=no-name-in-module
+from pydantic import BaseModel
 
 from tgcf.plugins import FileType, TgcfMessage, TgcfPlugin
 from tgcf.utils import match
@@ -62,18 +62,16 @@ class TgcfFilter(TgcfPlugin):
         if not text and flist.whitelist == []:
             return True
 
-        # first check if any blacklisted pattern is present
         for forbidden in flist.blacklist:
             if match(forbidden, text, self.filters.text.regex):
-                return False  # when a forbidden pattern is found
+                return False
 
         if not flist.whitelist:
-            return True  # if no whitelist is present
+            return True
 
-        # if whitelist is present
         for allowed in flist.whitelist:
             if match(allowed, text, self.filters.text.regex):
-                return True  # only when atleast one whitelisted pattern is found
+                return True
 
     def users_safe(self, tm: TgcfMessage) -> bool:
         flist = self.filters.users

@@ -3,12 +3,11 @@
 Contains all the first-party tgcf plugins.
 """
 
-
 import inspect
 import logging
 from enum import Enum
 from importlib import import_module
-from typing import Any, Dict
+from typing import Any, Dict, Optional
 
 from telethon.tl.custom.message import Message
 
@@ -27,6 +26,9 @@ class FileType(str, Enum):
     CONTACT = "contact"
     PHOTO = "photo"
     DOCUMENT = "document"
+    POLL = "poll"
+    DICE = "dice"
+    STORY = "story"
     NOFILE = "nofile"
 
 
@@ -37,12 +39,12 @@ class TgcfMessage:
         self.raw_text = self.message.raw_text
         self.sender_id = self.message.sender_id
         self.file_type = self.guess_file_type()
-        self.new_file = None
+        self.new_file: Optional[str] = None
         self.cleanup = False
-        self.reply_to = None
+        self.reply_to: Optional[int] = None
 
     async def get_file(self) -> str:
-        """Downloads the file in the message and returns the path where its saved."""
+        """Download the file in the message and return the local path."""
         if self.file_type == FileType.NOFILE:
             raise FileNotFoundError("No file exists in this message.")
         self.file = stamp(await self.message.download_media(""), self.sender_id)
@@ -52,9 +54,10 @@ class TgcfMessage:
         for i in FileType:
             if i == FileType.NOFILE:
                 return i
-            obj = getattr(self.message, i.value)
+            obj = getattr(self.message, i.value, None)
             if obj:
                 return i
+        return FileType.NOFILE
 
     def clear(self) -> None:
         if self.new_file and self.cleanup:
@@ -75,7 +78,7 @@ class TgcfPlugin:
 
 def load_plugins() -> Dict[str, TgcfPlugin]:
     """Load the plugins specified in config."""
-    _plugins = {}
+    _plugins: Dict[str, TgcfPlugin] = {}
     for plugin_id, plugin_data in PLUGINS.items():
         if not plugin_data:
             plugin_data = {}
@@ -85,42 +88,43 @@ def load_plugins() -> Dict[str, TgcfPlugin]:
             plugin_module = import_module("tgcf.plugins." + plugin_id)
         except ModuleNotFoundError:
             logging.error(
-                f"{plugin_id} is not a first party plugin. Trying to load from availaible third party plugins."
+                "%s is not a first-party plugin. Trying third-party plugins.", plugin_id
             )
+            plugin_module_name = f"tgcf_{plugin_id}"
             try:
-                plugin_module_name = f"tgcf_{plugin_id}"
                 plugin_module = import_module(plugin_module_name)
             except ModuleNotFoundError:
                 logging.error(
-                    f"Module {plugin_module_name} not found. Failed to load plugin {plugin_id}"
+                    "Module %s not found. Failed to load plugin %s",
+                    plugin_module_name,
+                    plugin_id,
                 )
                 continue
             else:
-                logging.info(
-                    f"Plugin {plugin_id} is successfully loaded from third party plugins"
-                )
+                logging.info("Plugin %s loaded from third-party plugins.", plugin_id)
         else:
-            logging.info(f"First party plugin {plugin_id} loaded!")
+            logging.info("First-party plugin %s loaded.", plugin_id)
+
         try:
             plugin_class = getattr(plugin_module, plugin_class_name)
             if not issubclass(plugin_class, TgcfPlugin):
                 logging.error(
-                    f"Plugin class {plugin_class_name} does not inherit TgcfPlugin"
+                    "Plugin class %s does not inherit TgcfPlugin", plugin_class_name
                 )
                 continue
             plugin: TgcfPlugin = plugin_class(plugin_data)
-            if not plugin.id_ == plugin_id:
-                logging.error(f"Plugin id for {plugin_id} does not match expected id.")
+            if plugin.id_ != plugin_id:
+                logging.error("Plugin id for %s does not match expected id.", plugin_id)
                 continue
         except AttributeError:
-            logging.error(f"Found plugin {plugin_id}, but plguin class not found.")
+            logging.error("Found plugin %s but plugin class not found.", plugin_id)
         else:
-            logging.info(f"Loaded plugin {plugin_id}")
-            _plugins.update({plugin.id_: plugin})
+            logging.info("Loaded plugin %s.", plugin_id)
+            _plugins[plugin.id_] = plugin
     return _plugins
 
 
-async def apply_plugins(message: Message) -> TgcfMessage:
+async def apply_plugins(message: Message) -> Optional[TgcfMessage]:
     """Apply all loaded plugins to a message."""
     tm = TgcfMessage(message)
 
@@ -131,9 +135,9 @@ async def apply_plugins(message: Message) -> TgcfMessage:
             else:
                 ntm = plugin.modify(tm)
         except Exception as err:
-            logging.error(f"Failed to apply plugin {_id}. \n {err} ")
+            logging.error("Failed to apply plugin %s: %s", _id, err)
         else:
-            logging.info(f"Applied plugin {_id}")
+            logging.info("Applied plugin %s.", _id)
             if not ntm:
                 tm.clear()
                 return None

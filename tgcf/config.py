@@ -7,7 +7,7 @@ from typing import Dict, List, Optional, Union
 
 import yaml
 from dotenv import load_dotenv
-from pydantic import BaseModel, validator  # pylint: disable=no-name-in-module
+from pydantic import BaseModel, field_validator
 from telethon import TelegramClient
 from telethon.sessions import StringSession
 
@@ -19,50 +19,53 @@ load_dotenv()
 class Forward(BaseModel):
     """Blueprint for the forward object."""
 
-    # pylint: disable=too-few-public-methods
     source: Union[int, str]
     dest: List[Union[int, str]] = []
     offset: int = 0
     end: Optional[int] = 0
+    # Forum/topic support: when dest is a forum group, set this to the topic ID
+    topic_id: Optional[int] = None
 
 
 class LiveSettings(BaseModel):
     """Settings to configure how tgcf operates in live mode."""
 
-    # pylint: disable=too-few-public-methods
     delete_sync: bool = False
     delete_on_edit: Optional[str] = None
+    # Forward albums (grouped media) as albums rather than individual messages
+    album_sync: bool = True
+    # Sync pinned-message actions to destination
+    pin_sync: bool = False
+    # Mirror reactions from source to destination
+    react_sync: bool = False
 
 
 class PastSettings(BaseModel):
     """Configuration for past mode."""
 
-    # pylint: disable=too-few-public-methods
     delay: float = 0
 
-    @validator("delay")
-    def validate_delay(cls, val):  # pylint: disable=no-self-use,no-self-argument
-        """Check if the delay used by user is values. If not, use closest logical values."""
+    @field_validator("delay")
+    @classmethod
+    def validate_delay(cls, val: float) -> float:
+        """Clamp delay to 0-100 seconds."""
         if val not in range(0, 101):
             logging.warning("delay must be within 0 to 100 seconds")
-            if val > 100:
-                val = 100
-            if val < 0:
-                val = 0
+            val = max(0.0, min(100.0, val))
         return val
 
 
 class Config(BaseModel):
     """The blueprint for tgcf's whole config."""
 
-    # pylint: disable=too-few-public-methods
     admins: List[Union[int, str]] = []
     forwards: List[Forward] = []
     show_forwarded_from: bool = False
     live: LiveSettings = LiveSettings()
     past: PastSettings = PastSettings()
-
     plugins: Dict = {}
+    # Apply Telegram's content-protection flag to forwarded messages
+    protect_content: bool = False
 
 
 def detect_config_type() -> int:
@@ -115,9 +118,9 @@ def read_config() -> Config:
 
 def write_config(config: Config):
     """Write changes in config back to file."""
-    if CONFIG_TYPE == 1 or CONFIG_TYPE == 0:
+    if CONFIG_TYPE in (1, 0):
         with open(CONFIG_FILE_NAME, "w", encoding="utf8") as file:
-            yaml.dump(config.dict(), file, sort_keys=False, allow_unicode=True)
+            yaml.dump(config.model_dump(), file, sort_keys=False, allow_unicode=True)
     elif CONFIG_TYPE == 2:
         logging.warning("Could not update config! As env var is used")
 

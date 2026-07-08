@@ -4,7 +4,7 @@ import shutil
 from typing import Any, Dict
 
 import requests
-from pydantic import BaseModel  # pylint: disable=no-name-in-module
+from pydantic import BaseModel
 from watermark import File, Position, Watermark, apply_watermark
 
 from tgcf.plugins import TgcfMessage, TgcfPlugin
@@ -22,8 +22,8 @@ def download_image(url: str, filename: str = "image.png") -> bool:
         logging.info("Image for watermarking already exists.")
         return True
     try:
-        logging.info(f"Downloading image {url}")
-        response = requests.get(url, stream=True)
+        logging.info("Downloading image %s", url)
+        response = requests.get(url, stream=True, timeout=30)
         if response.status_code == 200:
             logging.info("Got Response 200")
             with open(filename, "wb") as file:
@@ -33,7 +33,7 @@ def download_image(url: str, filename: str = "image.png") -> bool:
         logging.error(err)
         return False
     else:
-        logging.info("File created image")
+        logging.info("Downloaded watermark image.")
         return True
 
 
@@ -44,7 +44,7 @@ class TgcfMark(TgcfPlugin):
         self.data = MarkConfig(**data)
 
     async def modify(self, tm: TgcfMessage) -> TgcfMessage:
-        if not tm.file_type in ["gif", "video", "photo"]:
+        if tm.file_type.value not in ("gif", "video", "photo"):
             return tm
         downloaded_file = await tm.get_file()
         base = File(downloaded_file)
